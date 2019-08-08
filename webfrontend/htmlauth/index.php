@@ -1,8 +1,7 @@
 <?php
 
 require_once "loxberry_web.php";
-
-define ("CONFIGFILE", "$lbpconfigdir/config.json");
+require_once "defines.php";
 
 $L = LBSystem::readlanguage("language.ini");
 $template_title = "Renault My Z.E. Plugin";

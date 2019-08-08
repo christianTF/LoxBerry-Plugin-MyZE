@@ -1,11 +1,9 @@
 <?php
 
 require_once "loxberry_system.php";
-
-define ("CONFIGFILE", "$lbpconfigdir/config.json");
+require_once "defines.php";
 
 if( $_GET["action"] == "saveconfig" ) {
-	// Build 
 	$data = array();
 	foreach( $_POST as $key => $value ) {
 		// PHP's $_POST converts dots of post variables to underscores
@@ -22,6 +20,31 @@ if( $_GET["action"] == "saveconfig" ) {
 		sendresponse( 500, "application/json", '{ "error" : "Submitted data are not valid json" }' );
 	}
 	exit(1);
+}
+
+if ( $_GET["action"] == "getsummary" ) {
+	shell_exec("php $lbphtmlauthdir/ze.php action=summary");
+	if ( ! file_exists(LOGINFILE) ) {
+		sendresponse ( 500, "application/json", '{ "error" : "Could not query summary" }' );
+	}
+	sendresponse ( 200, "application/json", file_get_contents( LOGINFILE ) );
+}
+
+if ( $_GET["action"] == "getbattery" ) {
+	$battfilename = TMPPREFIX . "batt_" . $_GET["vin"];
+	if (empty($_GET["vin"]) || !file_exists( $battfilename ) ) {
+		sendresponse ( 500, "application/json", '{ "error" : "Could not query battery data" }' );
+	}
+	sendresponse ( 200, "application/json", file_get_contents( $battfilename ) );
+}
+
+if ( $_GET["action"] == "getconditionlast" ) {
+	$condfilename = TMPPREFIX . "cond_" . $_GET["vin"];
+	shell_exec("php $lbphtmlauthdir/ze.php action=conditionlast vin=" . $_GET["vin"]);
+	if ( ! file_exists($condfilename) ) {
+		sendresponse ( 500, "application/json", '{ "error" : "Could not query air-condition data" }' );
+	}
+	sendresponse ( 200, "application/json", file_get_contents( $condfilename ) );
 }
 
 

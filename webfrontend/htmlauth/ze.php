@@ -6,11 +6,7 @@ error_log("------------------------------------------------------");
 include_once "loxberry_system.php";
 include_once "loxberry_io.php";
 require_once "./phpMQTT/phpMQTT.php";
-
-define ("BASEURL", "https://www.services.renault-ze.com/api");
-define ("CONFIGFILE", "$lbpconfigdir/config.json");
-define ("TMPPREFIX", "/run/shm/${lbpplugindir}_");
-define ("LOGINFILE", TMPPREFIX . "sessiondata.json");
+require_once "defines.php";
 
 
 //
