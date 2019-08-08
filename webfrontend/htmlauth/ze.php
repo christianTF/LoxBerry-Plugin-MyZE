@@ -9,7 +9,9 @@ require_once "./phpMQTT/phpMQTT.php";
 
 define ("BASEURL", "https://www.services.renault-ze.com/api");
 define ("CONFIGFILE", "$lbpconfigdir/config.json");
-define ("LOGINFILE", "/run/shm/${lbpplugindir}_zoe_data.json");
+define ("TMPPREFIX", "/run/shm/${lbpplugindir}_");
+define ("LOGINFILE", TMPPREFIX . "sessiondata.json");
+
 
 //
 // Query parameter 
@@ -33,40 +35,21 @@ $VIN = false;
 // Define vehicle
 if(!empty($_GET["vehicle"])) { 
 	$VIN = $_GET["vehicle"];
-}
-if(!empty($_GET["vin"])) { 
+} elseif (!empty($_GET["v"])) { 
+	$VIN = $_GET["v"];
+} elseif (!empty($_GET["vin"])) { 
 	$VIN = $_GET["vin"];
 }
 
-// Battery state
-if(isset($_GET["battery"])) { 
-	$action = "battery";
-}
-if(isset($_GET["batt"])) { 
-	$action = "battery";
+// Unlink at: Delete a cronjob after this timestamp
+if(!empty($_GET["unlinkat"])) {
+	$unlinkat = $_GET["unlinkat"];
 }
 
-// Air Condition
-if(isset($_GET["condition"])) { 
-	$action = "condition";
+// Actions
+if(isset($_GET["a"])) {
+	$_GET["action"] = $_GET["a"];
 }
-if(isset($_GET["cond"])) { 
-	$action = "condition";
-}
-
-if(isset($_GET["conditionlast"])) { 
-	$action = "conditionlast";
-}
-if(isset($_GET["condlast"])) { 
-	$action = "conditionlast";
-}
-
-// Start charging
-if(isset($_GET["charge"])) { 
-	$action = "charge";
-}
-
-// Start charging
 if(isset($_GET["action"])) { 
 	switch($_GET["action"]) {
 		case "summary":
@@ -87,6 +70,9 @@ if(isset($_GET["action"])) {
 			break;
 		case "charge":
 			$action = "charge";
+			break;
+		case "relogin":
+			$action = "relogin";
 			break;
 		default: 
 			echo "Action '" . $_GET["action"] . "' not supported. Exiting.\n";
@@ -182,7 +168,11 @@ if ( $mqttenabled ) {
 }
 
 // Read login data from disk, if exists
-$login = zoe_readlogin();
+if ( $action != "relogin" ) {
+	$login = zoe_readlogin();
+} else {
+	$action = "summary";
+}
 
 // Call Login
 if ( empty($token) ) {
@@ -229,47 +219,13 @@ function zoe_summary( $login )
 	foreach ($login->user->associated_vehicles as $vehicle) {
 		$vin = $vehicle->VIN;
 		echo "-> " . $vin . "\n";
-		$battery = zoe_battery( $vin );
+		zoe_battery( $vin );
+		
 		// var_dump($battery);
 		// Looping all properties
 		
 	}
 }
-
-// // Logs in to Renault cloud, and requests token and vehicle list
-// function zoe_login ( $user, $pass ) {
-	// global $token;
-	// $curl = curl_init();
-
-	// $payload = [ "username" => $user, "password" => $pass ]; 
-	// $payload = json_encode($payload);
-	// $header = [ "Content-Type: application/json;charset=UTF-8", "Content-Length: " . strlen($payload) ];
-	
-	// curl_setopt($curl, CURLOPT_URL, BASEURL."/user/login");
-	// curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
-	// curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
-	// curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-	// curl_setopt($curl, CURLOPT_HTTPHEADER, $header );
-	// $logindata = curl_exec($curl);
-	// $login = json_decode($logindata);
-	// if ( empty($login) ) {
-		// echo "JSON error, or JSON is empty: Error code " . json_last_error() . " " . json_last_error_msg() . "\n";
-		// return;
-	// }
-	
-	// // Write data to ramdisk
-	// file_put_contents(LOGINFILE, $logindata);
-	
-	// // Read token
-	// if( empty($login->token) ) {
-		// echo "Data error, no token found. Response: $logindata\n";
-		// return;
-	// } else {
-		// $token = $login->token;
-	// }
-	// // echo $logindata . "\n";
-	// return $login;
-// }
 
 function zoe_login ( $user, $pass ) {
 	global $token;
@@ -334,6 +290,10 @@ function zoe_battery ( $VIN ) {
 	
 	global $islb;
 	
+	$tmpfilename = TMPPREFIX . "batt_" . $VIN;
+	unlink($tmpfilename);
+	
+	
 	$batterydata = zoe_curl_send( BASEURL."/vehicle/$VIN/battery", false );
 	$battery = json_decode($batterydata);
 		
@@ -374,21 +334,40 @@ function zoe_battery ( $VIN ) {
 		
 		$sendbuffer[$sendkey] = $sendval;
 		
+		
 	}
 	
+	file_put_contents( $tmpfilename, json_encode($sendbuffer) );
 	relay( $sendbuffer );
-	
 	
 	return json_decode($batterydata);
 }
 
 function zoe_condition( $VIN, $condenable=false )
 {
+	
+	global $unlinkat;
+	
 	echo "zoe_condition\n";
+	
+	$tmpfilename = TMPPREFIX . "cond_" . $VIN;
+	unlink($tmpfilename);
+	
+	$cronpath = LBHOMEDIR."/system/cron/cron.01min/".LBPPLUGINDIR."_condupdate_${VIN}";
+	
 	// Enable
 	if( $condenable == true ) {
 		$conddata = zoe_curl_send( BASEURL."/vehicle/$VIN/air-conditioning", false, true );
-		sleep(2);
+		// We create a cronjob that updates the status in the background
+		$cronentrystr = 
+			"#!/bin/bash".PHP_EOL.
+			"cd ".LBPHTMLAUTHDIR.PHP_EOL.
+			"php ".LBPHTMLAUTHDIR."/ze.php action=conditionlast vehicle=$VIN unlinkat=".(time()+5*60).PHP_EOL;
+		echo "Creating cron for condition auto-refresh: $cronpath\n";
+		if (!file_put_contents($cronpath, $cronentrystr)) {
+			echo "Could not write crontab.\n";
+		}
+		chmod($cronpath, 0755); 
 	}
 	$lastconddata = zoe_curl_send( BASEURL."/vehicle/$VIN/air-conditioning/last", false );
 	$lastcond = json_decode($lastconddata);
@@ -415,7 +394,19 @@ function zoe_condition( $VIN, $condenable=false )
 		$sendbuffer[$basekey."_date_lox"] = epoch2lox(round($lastcond->date/1000));
 		$sendbuffer[$basekey."_date_text"] = date("d.m.y H:i", round($lastcond->date/1000));
 	}
+	
+	file_put_contents( $tmpfilename, json_encode($sendbuffer) );
 	relay( $sendbuffer );
+	
+	// If the $unlinkat parameter is higher than time, delete the cronjob
+	if( !empty($unlinkat) && time() > $unlinkat ) {
+		echo "Removing outdated cronjob\n";
+		unlink($cronpath);
+	}
+	
+	
+	
+	return $lastconddata;
 
 }
 
