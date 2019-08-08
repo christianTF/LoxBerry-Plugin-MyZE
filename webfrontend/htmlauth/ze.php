@@ -8,8 +8,8 @@ include_once "loxberry_io.php";
 require_once "./phpMQTT/phpMQTT.php";
 
 define ("BASEURL", "https://www.services.renault-ze.com/api");
-define ("CONFIGFILE", "./zoe_config.json");
-define ("LOGINFILE", "/tmp/zoe_data.json");
+define ("CONFIGFILE", "$lbpconfigdir/config.json");
+define ("LOGINFILE", "/run/shm/${lbpplugindir}_zoe_data.json");
 
 //
 // Query parameter 
