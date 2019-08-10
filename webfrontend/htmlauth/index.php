@@ -3,6 +3,10 @@
 require_once "loxberry_web.php";
 require_once "defines.php";
 
+$navbar[1]['active'] = True;
+$navbar[2]['active'] = null;
+
+
 $L = LBSystem::readlanguage("language.ini");
 $template_title = "Renault My Z.E. Plugin";
 $helplink = "https://www.loxwiki.eu/x/KoNdAw";

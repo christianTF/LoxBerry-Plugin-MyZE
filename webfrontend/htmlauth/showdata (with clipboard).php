@@ -3,10 +3,6 @@
 require_once "loxberry_web.php";
 require_once "defines.php";
 
-$navbar[1]['active'] = null;
-$navbar[2]['active'] = True;
-
-
 $L = LBSystem::readlanguage("language.ini");
 $template_title = "Renault My Z.E. Plugin";
 $helplink = "https://www.loxwiki.eu/x/KoNdAw";
@@ -62,44 +58,6 @@ table, th, td {
 {
   display: none !important;
 }
-
-
-.table {
-  width: 90%;
-  margin: auto;
-  table-layout: fixed;
-  display: table;
-  border-collapse: collapse;
-  border: 1px solid grey;
-  padding: 5px;
-}
-
-.table_row {
-  display: table-row;
-  border: 1px solid grey;
-  padding: 5px;
-
-}
-
-.table_head {
-	color: white;
-	background-color: #6dac20;
-	font-weight: bold;
-	text-shadow: 1px 1px 2px black;
-}
-
-.table_col {
-  display: table-cell;
-  border: 1px solid grey;
-  padding: 5px;
-}
-
-.table_col_value {
-  width:20%;
-}
-
-
-
 </style>
 
 <div class="wide">Query links and data</div>
@@ -108,6 +66,10 @@ table, th, td {
 	<div style="flex: 0 0 95%;padding:5px" data-role="fieldcontain">
 		<label for="summarylink">Query battery data for all vehicles</label>
 		<input type="text" id="summarylink" name="summarylink" data-mini="true" value="<?=$lbzeurl."?action=summary";?>" readonly>
+	</div>
+		<div style="flex: 1;padding:5px">
+			<a href="#" class="ui-btn ui-icon-tag ui-btn-icon-notext ui-corner-all copytoclipboard" data-idtocopy="summarylink">Clipboard</a>
+		</div>
 	</div>
 </div>
 <hr>
@@ -214,6 +176,10 @@ function showVehicles ( data )
 						<label>Query this battery</label> \
 						<input type="text" id="batterylink_'+vehicle.VIN+'" name="batterylink_'+vehicle.VIN+'" data-mini="true" value="'+lbzeurl+'?action=battery&vehicle='+vehicle.VIN+'" readonly> \
 					</div> \
+						<div style="flex: 1;padding:5px"> \
+							<a href="#" id="btnbatt_'+vehicle.VIN+'" class="ui-btn ui-icon-tag ui-btn-icon-notext ui-corner-all copytoclipboard" data-idtocopy="batterylink_'+vehicle.VIN+'">Clipboard</a> \
+						</div> \
+					</div> \
 				</div> \
 				';
 				
@@ -222,6 +188,10 @@ function showVehicles ( data )
 					<div style="flex: 0 0 95%;padding:10px"  data-role="fieldcontain"> \
 						<label>Last air-condition start time</label> \
 						<input type="text" id="condlastlink_'+vehicle.VIN+'" name="condlastlink_'+vehicle.VIN+'" data-mini="true" value="'+lbzeurl+'?action=conditionlast&vehicle='+vehicle.VIN+'" readonly> \
+					</div> \
+						<div style="flex: 1;padding:5px"> \
+							<a href="#" id="btncondlast_'+vehicle.VIN+'" class="ui-btn ui-icon-tag ui-btn-icon-notext ui-corner-all copytoclipboard" data-idtocopy="condlastlink_'+vehicle.VIN+'">Clipboard</a> \
+						</div> \
 					</div> \
 				</div> \
 				';
@@ -232,6 +202,10 @@ function showVehicles ( data )
 						<label>Enable air-condition</label> \
 						<input type="text" id="condlink_'+vehicle.VIN+'" name="condlink_'+vehicle.VIN+'" data-mini="true" value="'+lbzeurl+'?action=condition&vehicle='+vehicle.VIN+'" readonly> \
 					</div> \
+						<div style="flex: 1;padding:5px"> \
+							<a href="#" id="btncond_'+vehicle.VIN+'" class="ui-btn ui-icon-tag ui-btn-icon-notext ui-corner-all copytoclipboard" data-idtocopy="condlink_'+vehicle.VIN+'">Clipboard</a> \
+						</div> \
+					</div> \
 				</div> \
 				';
 				
@@ -240,6 +214,10 @@ function showVehicles ( data )
 					<div style="flex: 0 0 95%;padding:10px" data-role="fieldcontain"> \
 						<label for="chargelink_'+vehicle.VIN+'">Start charging</label> \
 						<input type="text" id="chargelink_'+vehicle.VIN+'" name="chargelink_'+vehicle.VIN+'" data-mini="true" value="'+lbzeurl+'?action=charge&vehicle='+vehicle.VIN+'" readonly> \
+					</div> \
+						<div style="flex: 1;padding:5px"> \
+							<a href="#" id="btncharge_'+vehicle.VIN+'" class="ui-btn ui-icon-tag ui-btn-icon-notext ui-corner-all copytoclipboard" data-idtocopy="chargelink_'+vehicle.VIN+'">Clipboard</a> \
+						</div> \
 					</div> \
 				</div> \
 				';
@@ -260,52 +238,27 @@ function showBattery ( vin, data )
 	vdivid = 'vehicle_'+vin;
 	vdiv=$("#"+vdivid);
 	
-	strHtml = '\
-		<div class="table" role="table" id="datatable_'+vin+'" aria-label="Data">\
-			<div class="table_row">\
-				<div class="table_col table_head">HTTP Virtual Input / Virtual Text Input</div>\
-				<div class="table_col table_head">MQTT Topic</div>\
-				<div class="table_col table_head table_col_value">Value</div>\
-			</div>\
-		</div>\
-	';
-	vdiv.append(strHtml);
-	
-	
-	
-	// strHtml = '<table style="border:1;width:100%;margin:0 auto;"> \
-		// <tr>\
-			// <th>HTTP Virtual Input / Virtual Text Input</th>\
-			// <th>MQTT Topic</th>\
-			// <th>Value</td>\
-		// </tr>';
-	// vdiv.append(strHtml);
-	strHtml = "";	
+	vdiv.append('<table style="border:1;width:95%">');
+
+	vdiv.append('<tr>');
+	vdiv.append('<th>HTTP Virtual Input / Virtual Text Input</th>');
+	vdiv.append('<th>MQTT Topic</th>');
+	vdiv.append('<th>Value</td>');
+	vdiv.append('</tr>');
+
 	
 	$.each ( data, function( prop, val ) { 
 				
 				mqtt = prop.split(/_(.+)/);
 				mqttprop = mqtttopic+'/'+mqtt[0]+'/'+mqtt[1];
-				
-				// strHtml+= '\
-					// <tr>\
-						// <td>'+prop+'</td>\
-						// <td>'+mqttprop+'</td>\
-						// <td>'+val+'</td>\
-					// </tr>';
-				
-				strHtml+= '\
-					<div class="table_row">\
-						<div class="table_col ">'+prop+'</div>\
-						<div class="table_col">'+mqttprop+'</div>\
-						<div class="table_col table_col_value">'+val+'</div>\
-					</div>\
-				';
-				
+				vdiv.append('<tr>');
+				vdiv.append('<td>'+prop+'</td>');
+				vdiv.append('<td>'+mqttprop+'</td>');
+				vdiv.append('<td>'+val+'</td>');
+				vdiv.append('</tr>');
 		});
-	$('#datatable_'+vin).append(strHtml);
 	queryCondition( vin );
-	
+	vdiv.append('</table>');
 		
 	// } else {
 		// $("#content").append("Sorry, no vehicles found :-(");
@@ -318,27 +271,18 @@ function showCondition ( vin, data )
 	
 	vdivid = 'vehicle_'+vin;
 	vdiv=$("#"+vdivid);
-	strHtml = "";
 	
 	$.each ( data, function( prop, val ) { 
 				
 				mqtt = prop.split(/_(.+)/);
 				mqttprop = mqtttopic+'/'+mqtt[0]+'/'+mqtt[1];
-				// strHtml += '\
-				// <tr>\
-					// <td>'+prop+'</td>\
-					// <td>'+mqttprop+'</td>\
-					// <td>'+val+'</td>\
-				// </tr>';
-				strHtml+= '\
-					<div class="table_row">\
-						<div class="table_col">'+prop+'</div>\
-						<div class="table_col">'+mqttprop+'</div>\
-						<div class="table_col table_col_value">'+val+'</div>\
-					</div>\
-				';
+				vdiv.append('<tr>');
+				vdiv.append('<td>'+prop+'</td>');
+				vdiv.append('<td>'+mqttprop+'</td>');
+				vdiv.append('<td>'+val+'</td>');
+				vdiv.append('</tr>');
 		});
-	$('#datatable_'+vin).append(strHtml);
+		
 	// } else {
 		// $("#content").append("Sorry, no vehicles found :-(");
 	// }	
