@@ -91,16 +91,63 @@ LBWeb::lbheader($template_title, $helplink, $helptemplate);
 <fieldset data-role="controlgroup">
 	<input type="checkbox" name="Loxone.enabled" id="Loxone.enabled" class="refreshdisplay">
 	<label for="Loxone.enabled">Enable to use HTTP transfer to Miniserver VI's/VTI's</label>
-	<p class="hint">This option enables direct pushes to virtual inputs on the Miniserver. VIs need to be named exactly as shown below.</p>
+	<p class="hint">This option enables direct pushes to virtual inputs on the Miniserver. VIs need to be named exactly as shown on the <i>Query links and data</i> tab.</p>
 </fieldset>
 
-<div style="display:none" class="loxonehidden">
+<div class="ui-grid-b loxonehidden" style="display:none;" >
+	<div class="ui-block-a" style="line-height: 92px;">
+		Miniserver to send
+	</div>
+	<div class="ui-block-b">
+
 <?php
 
-echo LBWeb::mslist_select_html( [ LABEL => 'Miniserver to send', FORMID => 'Loxone.msnr', DATA_MINI => '0' ] );
+echo LBWeb::mslist_select_html( [ FORMID => 'Loxone.msnr', DATA_MINI => '0' ] );
 
 ?>
+	</div>
+	<div class="ui-block-b">
+	</div>
 </div>
+
+<style>
+/* Custom indentations are needed because the length of custom labels differs from
+   the length of the standard labels */
+.custom-size-flipswitch.ui-flipswitch .ui-btn.ui-flipswitch-on {
+    text-indent: -5.9em;
+}
+.custom-size-flipswitch.ui-flipswitch .ui-flipswitch-off {
+    text-indent: 0.5em;
+}
+/* Custom widths are needed because the length of custom labels differs from
+   the length of the standard labels */
+.custom-size-flipswitch.ui-flipswitch {
+    width: 8.875em;
+}
+.custom-size-flipswitch.ui-flipswitch.ui-flipswitch-active {
+    padding-left: 7em;
+    width: 1.875em;
+}
+@media (min-width: 28em) {
+    /*Repeated from rule .ui-flipswitch above*/
+    .ui-field-contain > label + .custom-size-flipswitch.ui-flipswitch {
+        width: 1.875em;
+    }
+}
+</style>
+
+<div class="ui-grid-b loxonehidden" style="display:none">
+	<div class="ui-block-a">
+		<label for="Loxone.cachedisabled">Use LoxBerry's cache</label>
+	</div>
+	<div class="ui-block-b">
+		<input type="checkbox" name="Loxone.cachedisabled" id="Loxone.cachedisabled" data-role="flipswitch" data-off-text="Cache" data-on-text="No Cache" data-wrapper-class="custom-size-flipswitch">
+	</div>
+	<div class="ui-block-c">
+		<p class="hint">This setting by default should stay on <b>Cache</b>. LoxBerry's cache prevents re-transmitting the same data multiple times (to reduce Miniserver load). During setup of your VI's/VTI's you may temporarily switch to <b>No Cache</b> to check your configuration.</p>
+	</div>
+</div>
+
 
 </form>
 <!-- End of form -->
@@ -180,6 +227,8 @@ function formFill()
 	if( typeof config.Loxone !== 'undefined') {
 		if (typeof config.Loxone.enabled !== 'undefined') $("#Loxone\\.enabled").prop('checked', config.Loxone.enabled).checkboxradio('refresh');
 		if (typeof config.Loxone.msnr !== 'undefined') $("#Loxone\\.msnr").val( config.Loxone.msnr ).selectmenu("refresh", true);
+		if (typeof config.Loxone.cachedisabled !== 'undefined') $("#Loxone\\.cachedisabled").prop('checked', config.Loxone.cachedisabled).flipswitch('refresh');
+		
 	}
 }
 

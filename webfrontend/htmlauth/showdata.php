@@ -103,7 +103,7 @@ table, th, td {
 </style>
 
 <div class="wide">Query links and data</div>
-
+<p>In all links, the combination <span class="mono">&lt;lbuser&gt;:&lt;lbpass&gt; </span>needs to be replaced with your <b>LoxBerry's</b> username and password.</p>
 <div style="display:flex; align-items: center; justify-content: center;">
 	<div style="flex: 0 0 95%;padding:5px" data-role="fieldcontain">
 		<label for="summarylink">Query battery data for all vehicles</label>

@@ -420,7 +420,11 @@ function relay ( $sendbuffer )
 	// Send via HTTP to Loxone Miniserver
 	if( $islb && isset($config->Loxone->enabled) && zoe_is_enabled($config->Loxone->enabled) ) {
 		echo "Sending data to Loxone Miniserver No. $msnr...\n";
-		mshttp_send_mem( $msnr, $sendbuffer );
+		if( isset($config->Loxone->cachedisabled) && zoe_is_enabled($config->Loxone->cachedisabled) ) {
+			mshttp_send( $msnr, $sendbuffer );
+		} else {
+			mshttp_send_mem( $msnr, $sendbuffer );
+		}
 	}
 	// Send to MQTT
 	if( $mqttenabled ) {
